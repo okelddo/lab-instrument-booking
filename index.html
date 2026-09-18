@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>實驗室儀器預約系統</title>
   <style>
-    :root { --bg:#f3f5f8; --paper:#fff; --ink:#1c2430; --muted:#5b6778; --line:#d7dee8; --accent:#0f6e6a; --accent-2:#0b4f4c; --danger:#b42318; --shadow:0 10px 30px rgba(20,40,60,.08); }
+    :root { --bg:#f3f5f8; --paper:#fff; --ink:#1c2430; --muted:#5b6778; --line:#d7dee8; --accent:#0f6e6a; --danger:#b42318; --shadow:0 10px 30px rgba(20,40,60,.08); }
     * { box-sizing: border-box; }
     html, body { margin:0; padding:0; background:var(--bg); color:var(--ink); font-family:"Noto Sans TC",sans-serif; }
     header { background:linear-gradient(135deg,#0b3d3b 0%,#0f6e6a 55%,#2a7ab5 100%); color:#fff; padding:22px 24px 20px; }
@@ -80,7 +80,7 @@
     </div>
     <div class="legend">點空白格子可直接預約；點既有預約可檢視／取消。衝突檢查以「同一儀器 + 同一日期 + 時段重疊」為準。</div>
     <div class="board"><table class="grid" id="grid"></table></div>
-    <footer>資料存在此瀏覽器。請用 <a href="https://okelddo.github.io/lab-instrument-booking/">GitHub Pages</a> 開啟，並強制重新整頁（Ctrl+F5）。</footer>
+    <footer>請用此網址開啟：https://okelddo.github.io/lab-instrument-booking/ ，若看不到週表請按 Ctrl+F5 強制重整頁。</footer>
   </div>
   <div class="modal-bg" id="modalBg">
     <div class="modal">
@@ -103,6 +103,28 @@
     </div>
   </div>
   <div class="toast" id="toast"></div>
-  <script src="https://cdn.jsdelivr.net/gh/okelddo/lab-instrument-booking@7541350f3a49f5f0f933922ca2a62a62a13c890a/app.js"></script>
+  <script>
+    (function () {
+      var urls = [
+        "./app.js",
+        "https://cdn.jsdelivr.net/gh/okelddo/lab-instrument-booking@7541350f3a49f5f0f933922ca2a62a62a13c890a/app.js",
+        "https://raw.githubusercontent.com/okelddo/lab-instrument-booking/7541350f3a49f5f0f933922ca2a62a62a13c890a/app.js"
+      ];
+      function load(i) {
+        if (i >= urls.length) {
+          document.getElementById("weekLabel").textContent = "脚本載入失敗，請重新整頁";
+          return;
+        }
+        fetch(urls[i]).then(function (r) {
+          if (!r.ok) throw new Error("bad");
+          return r.text();
+        }).then(function (code) {
+          if (code.indexOf("const INSTRUMENTS") === -1) throw new Error("not js");
+          (0, eval)(code);
+        }).catch(function () { load(i + 1); });
+      }
+      load(0);
+    })();
+  </script>
 </body>
 </html>
