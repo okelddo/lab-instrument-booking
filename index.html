@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>實驗室儀器預約系統</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #f3f5f8;
+      --paper: #ffffff;
+      --ink: #1c2430;
+      --muted: #5b6778;
+      --line: #d7dee8;
+      --accent: #0f6e6a;
+      --accent-2: #0b4f4c;
+      --warn: #b45309;
+      --danger: #b42318;
+      --ok: #027a48;
+      --shadow: 0 10px 30px rgba(20, 40, 60, 0.08);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: "Noto Sans TC", sans-serif; }
+    header {
+      background: linear-gradient(135deg, #0b3d3b 0%, #0f6e6a 55%, #2a7ab5 100%);
+      color: #fff;
+      padding: 22px 24px 20px;
+    }
+    .wrap { max-width: 1400px; margin: 0 auto; }
+    header h1 { margin: 0 0 6px; font-size: 26px; letter-spacing: 0.04em; }
+    header p { margin: 0; opacity: 0.9; font-size: 14px; }
+    .toolbar {
+      display: flex; flex-wrap: wrap; gap: 10px; align-items: end;
+      padding: 16px 0 8px;
+    }
+    .field { display: flex; flex-direction: column; gap: 4px; }
+    .field label { font-size: 12px; color: var(--muted); font-weight: 700; }
+    input, select, button, textarea {
+      font-family: inherit; font-size: 14px;
+    }
+    input, select, textarea {
+      border: 1px solid var(--line); border-radius: 10px; padding: 9px 11px; background: #fff;
+    }
+    input:focus, select:focus, textarea:focus { outline: 2px solid #9ad8d4; border-color: var(--accent); }
+    .name-box {
+      background: #fff; border: 2px solid #9ad8d4; min-width: 180px; font-weight: 700;
+    }
+    .btn {
+      border: 0; border-radius: 10px; padding: 9px 14px; cursor: pointer; font-weight: 700;
+      background: var(--accent); color: #fff;
+    }
+    .btn:hover { background: var(--accent-2); }
+    .btn.ghost { background: #fff; color: var(--ink); border: 1px solid var(--line); }
+    .btn.warn { background: #b45309; }
+    .btn.danger { background: var(--danger); }
+    .week-nav { display: flex; gap: 8px; align-items: center; }
+    .week-label { font-weight: 800; min-width: 210px; text-align: center; }
+    .legend { font-size: 12px; color: var(--muted); padding: 4px 0 12px; }
+    .board {
+      background: var(--paper); border-radius: 16px; box-shadow: var(--shadow);
+      overflow: auto; margin-bottom: 28px;
+    }
+    table.grid { border-collapse: separate; border-spacing: 0; min-width: 1100px; width: 100%; }
+    .grid th, .grid td { border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); vertical-align: top; }
+    .grid th { background: #eef3f7; font-size: 13px; padding: 10px 8px; position: sticky; top: 0; z-index: 2; }
+    .grid th.inst { left: 0; z-index: 3; min-width: 170px; text-align: left; }
+    .grid td.inst {
+      position: sticky; left: 0; background: #f8fafc; font-weight: 800; font-size: 13px;
+      padding: 10px 10px; min-width: 170px; z-index: 1;
+    }
+    .grid td.cell { min-width: 160px; height: 92px; padding: 6px; background: #fff; }
+    .grid td.cell.today { background: #f3fbfa; }
+    .cell-list { display: flex; flex-direction: column; gap: 5px; min-height: 70px; }
+    .booking {
+      border-radius: 8px; padding: 5px 7px; font-size: 12px; line-height: 1.35;
+      color: #fff; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,.12);
+    }
+    .booking .who { font-weight: 800; }
+    .booking .meta { opacity: 0.92; font-family: "JetBrains Mono", monospace; font-size: 11px; }
+    .add {
+      margin-top: auto; border: 1px dashed #c5d0dc; background: #f8fbff; color: #3c4b5c;
+      border-radius: 8px; padding: 4px 6px; font-size: 12px; cursor: pointer; text-align: center;
+    }
+    .add:hover { background: #e8f6f4; border-color: var(--accent); color: var(--accent-2); }
+    .empty { color: #98a4b3; font-size: 12px; }
+    .modal-bg {
+      position: fixed; inset: 0; background: rgba(16, 24, 32, .45); display: none;
+      align-items: center; justify-content: center; z-index: 20; padding: 16px;
+    }
+    .modal-bg.show { display: flex; }
+    .modal {
+      width: min(520px, 100%); background: #fff; border-radius: 16px; padding: 18px 18px 14px;
+      box-shadow: 0 20px 50px rgba(0,0,0,.25);
+    }
+    .modal h2 { margin: 0 0 12px; font-size: 18px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .form-grid .full { grid-column: 1 / -1; }
+    .hint { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .alert {
+      display: none; background: #fef3f2; color: #912018; border: 1px solid #fecdca;
+      border-radius: 10px; padding: 8px 10px; font-size: 13px; margin: 8px 0;
+    }
+    .alert.show { display: block; }
+    .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }
+    .toast {
+      position: fixed; right: 16px; bottom: 16px; background: #10231f; color: #fff;
+      padding: 10px 14px; border-radius: 10px; display: none; z-index: 30; max-width: 360px;
+    }
+    .toast.show { display: block; }
+    footer { color: var(--muted); font-size: 12px; padding-bottom: 30px; }
+    @media (max-width: 720px) {
+      .form-grid { grid-template-columns: 1fr; }
+      header h1 { font-size: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>實驗室儀器預約系統</h1>
+      <p>填寫使用者名稱與時段即可預約。同一儀器在相同時段不可重複預約。</p>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div class="toolbar">
+      <div class="field">
+        <label for="userName">使用者名稱（必填）</label>
+        <input id="userName" class="name-box" placeholder="例如 WG OT1 / 王小明" />
+      </div>
+      <div class="field">
+        <label>週次</label>
+        <div class="week-nav">
+          <button class="btn ghost" id="prevWeek">上一週</button>
+          <div class="week-label" id="weekLabel"></div>
+          <button class="btn ghost" id="nextWeek">下一週</button>
+          <button class="btn ghost" id="thisWeek">本週</button>
+        </div>
+      </div>
+      <button class="btn" id="newBooking">＋ 新增預約</button>
+      <button class="btn ghost" id="loadSample">載入範例週表</button>
+      <button class="btn ghost" id="exportData">匯出 JSON</button>
+      <button class="btn ghost" id="importBtn">匯入 JSON</button>
+      <input id="importFile" type="file" accept="application/json" hidden />
+    </div>
+    <div class="legend">點空白格子可直接預約；點既有預約可檢視／取消。衝突檢查以「同一儀器 + 同一日期 + 時段重疊」為準。</div>
+    <div class="board">
+      <table class="grid" id="grid"></table>
+    </div>
+    <footer>
+      資料預設存在此瀏覽器（localStorage）。若要給實驗室共用，請匯出 JSON 後放到共用位置，或啟用 GitHub Pages 後請大家使用同一台公用電腦／同一瀏覽器設定檔。
+    </footer>
+  </div>
+
+  <div class="modal-bg" id="modalBg">
+    <div class="modal">
+      <h2 id="modalTitle">新增預約</h2>
+      <div class="form-grid">
+        <div class="field full">
+          <label>使用者名稱</label>
+          <input id="fName" placeholder="必填" />
+        </div>
+        <div class="field full">
+          <label>儀器</label>
+          <select id="fInst"></select>
+        </div>
+        <div class="field">
+          <label>日期</label>
+          <input id="fDate" type="date" />
+        </div>
+        <div class="field">
+          <label>備註</label>
+          <input id="fNote" placeholder="例如 SC26482-01、可協調" />
+        </div>
+        <div class="field">
+          <label>開始時間</label>
+          <input id="fStart" type="time" value="09:00" />
+        </div>
+        <div class="field">
+          <label>結束時間</label>
+          <input id="fEnd" type="time" value="18:00" />
+        </div>
+      </div>
+      <div class="hint">結束時間必須晚於開始時間。若該儀器此時段已被預約，系統會拒絕並顯示衝突對象。</div>
+      <div class="alert" id="formAlert"></div>
+      <div class="actions">
+        <button class="btn danger" id="deleteBtn" style="display:none;margin-right:auto;">取消此預約</button>
+        <button class="btn ghost" id="cancelBtn">關閉</button>
+        <button class="btn" id="saveBtn">儲存預約</button>
+      </div>
+    </div>
+  </div>
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const INSTRUMENTS = [
+      "QL C band",
+      "O band",
+      "E band",
+      "Ti:sapphire",
+      "Toptica 1050",
+      "1064 放大器",
+      "Santec C band",
+      "Santec TSL-570-1 C band",
+      "Santec TSL-570-2 C band",
+      "Sacher1100-1190",
+      "Sacher 790 ~840",
+      "EPOPO 1950",
+      "Toptica 950",
+      "HCP - 2 um amplifier"
+    ];
+
+    const STORAGE_KEY = "lab-instrument-bookings-v1";
+    const USER_KEY = "lab-instrument-username";
+    const WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
+
+    const state = {
+      weekStart: startOfWeek(new Date("2026-09-17T00:00:00")),
+      bookings: loadBookings(),
+      editingId: null
+    };
+
+    function startOfWeek(date) {
+      const d = new Date(date);
+      d.setHours(0, 0, 0, 0);
+      const day = d.getDay();
+      const diff = day === 0 ? -6 : 1 - day;
+      d.setDate(d.getDate() + diff);
+      return d;
+    }
+
+    function toISODate(d) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    }
+
+    function parseISO(s) {
+      const [y, m, d] = s.split("-").map(Number);
+      return new Date(y, m - 1, d);
+    }
+
+    function fmtHeader(iso) {
+      const d = parseISO(iso);
+      return `${d.getMonth() + 1}/${d.getDate()}（${WEEKDAYS[d.getDay()]}）`;
+    }
+
+    function loadBookings() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        return raw ? JSON.parse(raw) : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveBookings() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state.bookings));
+    }
+
+    function colorFor(name) {
+      let hash = 0;
+      for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+      const hues = [168, 198, 221, 32, 262, 142, 12, 285];
+      const h = hues[Math.abs(hash) % hues.length];
+      return `hsl(${h} 42% 36%)`;
+    }
+
+    function toast(msg) {
+      const el = document.getElementById("toast");
+      el.textContent = msg;
+      el.classList.add("show");
+      setTimeout(() => el.classList.remove("show"), 2600);
+    }
+
+    function weekDates() {
+      return Array.from({ length: 6 }, (_, i) => {
+        const d = new Date(state.weekStart);
+        d.setDate(d.getDate() + i);
+        return toISODate(d);
+      });
+    }
+
+    function overlaps(a, b) {
+      return a.instrument === b.instrument &&
+        a.date === b.date &&
+        a.start < b.end &&
+        b.start < a.end;
+    }
+
+    function findConflict(candidate, ignoreId) {
+      return state.bookings.find((b) => b.id !== ignoreId && overlaps(candidate, b));
+    }
+
+    function render() {
+      const dates = weekDates();
+      const today = toISODate(new Date());
+      document.getElementById("weekLabel").textContent =
+        `${fmtHeader(dates[0])} – ${fmtHeader(dates[5])}`;
+
+      const table = document.getElementById("grid");
+      let html = "<thead><tr><th class='inst'>儀器</th>";
+      dates.forEach((iso) => {
+        html += `<th>${fmtHeader(iso)}${iso === today ? " · 今天" : ""}</th>`;
+      });
+      html += "</tr></thead><tbody>";
+
+      INSTRUMENTS.forEach((inst) => {
+        html += `<tr><td class="inst">${inst}</td>`;
+        dates.forEach((iso) => {
+          const items = state.bookings
+            .filter((b) => b.instrument === inst && b.date === iso)
+            .sort((a, b) => a.start.localeCompare(b.start));
+          html += `<td class="cell${iso === today ? " today" : ""}"><div class="cell-list">`;
+          if (!items.length) html += `<div class="empty">尚未預約</div>`;
+          items.forEach((b) => {
+            html += `<div class="booking" data-id="${b.id}" style="background:${colorFor(b.name)}">
+              <div class="who">${escapeHtml(b.name)}</div>
+              <div class="meta">${b.start}–${b.end}</div>
+              ${b.note ? `<div>${escapeHtml(b.note)}</div>` : ""}
+            </div>`;
+          });
+          html += `<div class="add" data-inst="${encodeURIComponent(inst)}" data-date="${iso}">＋ 預約此時段</div>`;
+          html += "</div></td>";
+        });
+        html += "</tr>";
+      });
+      html += "</tbody>";
+      table.innerHTML = html;
+
+      table.querySelectorAll(".booking").forEach((el) => {
+        el.addEventListener("click", () => openEdit(el.dataset.id));
+      });
+      table.querySelectorAll(".add").forEach((el) => {
+        el.addEventListener("click", () => {
+          openCreate(decodeURIComponent(el.dataset.inst), el.dataset.date);
+        });
+      });
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, (c) => ({
+        "&": "&", "<": "<", ">": ">", '"': """, "'": "&#39;"
+      }[c]));
+    }
+
+    function fillInstOptions(selected) {
+      const sel = document.getElementById("fInst");
+      sel.innerHTML = INSTRUMENTS.map((n) =>
+        `<option value="${escapeHtml(n)}" ${n === selected ? "selected" : ""}>${escapeHtml(n)}</option>`
+      ).join("");
+    }
+
+    function openCreate(inst, date) {
+      const name = document.getElementById("userName").value.trim();
+      state.editingId = null;
+      document.getElementById("modalTitle").textContent = "新增預約";
+      document.getElementById("deleteBtn").style.display = "none";
+      document.getElementById("fName").value = name;
+      fillInstOptions(inst || INSTRUMENTS[0]);
+      document.getElementById("fDate").value = date || toISODate(new Date());
+      document.getElementById("fStart").value = "09:00";
+      document.getElementById("fEnd").value = "18:00";
+      document.getElementById("fNote").value = "";
+      hideAlert();
+      document.getElementById("modalBg").classList.add("show");
+      if (!name) document.getElementById("fName").focus();
+    }
+
+    function openEdit(id) {
+      const b = state.bookings.find((x) => x.id === id);
+      if (!b) return;
+      state.editingId = id;
+      document.getElementById("modalTitle").textContent = "預約詳情";
+      document.getElementById("deleteBtn").style.display = "inline-block";
+      document.getElementById("fName").value = b.name;
+      fillInstOptions(b.instrument);
+      document.getElementById("fDate").value = b.date;
+      document.getElementById("fStart").value = b.start;
+      document.getElementById("fEnd").value = b.end;
+      document.getElementById("fNote").value = b.note || "";
+      hideAlert();
+      document.getElementById("modalBg").classList.add("show");
+    }
+
+    function hideAlert() {
+      const el = document.getElementById("formAlert");
+      el.classList.remove("show");
+      el.textContent = "";
+    }
+
+    function showAlert(msg) {
+      const el = document.getElementById("formAlert");
+      el.textContent = msg;
+      el.classList.add("show");
+    }
+
+    function readForm() {
+      return {
+        name: document.getElementById("fName").value.trim(),
+        instrument: document.getElementById("fInst").value,
+        date: document.getElementById("fDate").value,
+        start: document.getElementById("fStart").value,
+        end: document.getElementById("fEnd").value,
+        note: document.getElementById("fNote").value.trim()
+      };
+    }
+
+    function saveForm() {
+      const data = readForm();
+      if (!data.name) return showAlert("請填寫使用者名稱。");
+      if (!data.instrument) return showAlert("請選擇儀器。");
+      if (!data.date) return showAlert("請選擇預約日期。");
+      if (!data.start || !data.end) return showAlert("請填寫開始與結束時間。");
+      if (data.end <= data.start) return showAlert("結束時間必須晚於開始時間。");
+
+      const candidate = { ...data, id: state.editingId || uid() };
+      const conflict = findConflict(candidate, state.editingId);
+      if (conflict) {
+        return showAlert(
+          `時段衝突：${conflict.date} ${conflict.start}–${conflict.end} 已由「${conflict.name}」預約` +
+          (conflict.note ? `（${conflict.note}）` : "") + "。"
+        );
+      }
+
+      if (state.editingId) {
+        state.bookings = state.bookings.map((b) => b.id === state.editingId ? { ...b, ...data } : b);
+        toast("已更新預約");
+      } else {
+        state.bookings.push({ ...data, id: candidate.id, createdAt: new Date().toISOString() });
+        toast("預約成功");
+      }
+      document.getElementById("userName").value = data.name;
+      localStorage.setItem(USER_KEY, data.name);
+      saveBookings();
+      closeModal();
+      render();
+    }
+
+    function deleteCurrent() {
+      if (!state.editingId) return;
+      const b = state.bookings.find((x) => x.id === state.editingId);
+      if (!confirm(`確定取消「${b.name}」在 ${b.instrument} / ${b.date} ${b.start}–${b.end} 的預約？`)) return;
+      state.bookings = state.bookings.filter((x) => x.id !== state.editingId);
+      saveBookings();
+      closeModal();
+      render();
+      toast("已取消預約");
+    }
+
+    function closeModal() {
+      document.getElementById("modalBg").classList.remove("show");
+      state.editingId = null;
+    }
+
+    function uid() {
+      return "b_" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+    }
+
+    function sampleBookings() {
+      const rows = [
+        ["QL C band", "2026-09-17", "16:00", "22:00", "WG mixer1", "SC26482-01 16點使用"],
+        ["QL C band", "2026-09-18", "15:30", "22:00", "OPA LT", "下午3:30之後使用（可協調）"],
+        ["O band", "2026-09-17", "09:00", "18:00", "WG mixer1", "SC26231-02"],
+        ["O band", "2026-09-18", "09:00", "18:00", "WG mixer1", "SC26421-01-D2-01 / PMC26016-02"],
+        ["O band", "2026-09-21", "16:00", "22:00", "WG mixer1", "SC26231-02 16點使用"],
+        ["O band", "2026-09-22", "16:00", "22:00", "WG mixer1", "PMCNew-26001 16點使用"],
+        ["O band", "2026-09-23", "16:00", "22:00", "WG mixer1", "PMCNew-26001 16點使用"],
+        ["Toptica 1050", "2026-09-17", "09:00", "18:00", "WG OT1", ""],
+        ["Toptica 1050", "2026-09-18", "09:00", "18:00", "WG OT1", ""],
+        ["Toptica 1050", "2026-09-24", "09:00", "18:00", "WG OT1", ""],
+        ["1064 放大器", "2026-09-17", "09:00", "18:00", "WG LT", "SC26474-01"],
+        ["1064 放大器", "2026-09-18", "09:00", "12:00", "C.H", "9點 SC26451-01"],
+        ["1064 放大器", "2026-09-18", "12:00", "18:00", "WG LT", "SC26474-02"],
+        ["1064 放大器", "2026-09-21", "09:00", "18:00", "WG LT", "SC26474-02"],
+        ["1064 放大器", "2026-09-22", "09:00", "18:00", "WG LT", "SC26474-02"],
+        ["1064 放大器", "2026-09-23", "09:00", "18:00", "WG LT", "SC26474-02"],
+        ["1064 放大器", "2026-09-24", "09:00", "18:00", "WG LT", "SC26474-02"],
+        ["Santec C band", "2026-09-17", "09:00", "18:00", "WG OT1", ""],
+        ["Santec C band", "2026-09-18", "09:00", "18:00", "WG OT1", ""],
+        ["Santec C band", "2026-09-21", "09:00", "18:00", "WG mixer1", "SC26476-03"],
+        ["Santec C band", "2026-09-22", "09:00", "18:00", "WG OT1", ""],
+        ["Santec TSL-570-1 C band", "2026-09-17", "09:00", "18:00", "WG mixer1", "SC26231-02"],
+        ["Santec TSL-570-1 C band", "2026-09-18", "09:00", "18:00", "WG mixer3", "SC26588-02 / SC26415-01"],
+        ["Santec TSL-570-1 C band", "2026-09-22", "09:00", "18:00", "WG OT2", "SC26555-01"],
+        ["Santec TSL-570-2 C band", "2026-09-17", "09:00", "18:00", "WG OT2", "SC26442-01"],
+        ["Santec TSL-570-2 C band", "2026-09-18", "09:00", "18:00", "SPA", ""],
+        ["Santec TSL-570-2 C band", "2026-09-21", "09:00", "18:00", "SPA", ""],
+        ["Santec TSL-570-2 C band", "2026-09-22", "09:00", "18:00", "SPA", ""],
+        ["Santec TSL-570-2 C band", "2026-09-23", "09:00", "18:00", "SPA", ""],
+        ["Santec TSL-570-2 C band", "2026-09-24", "09:00", "18:00", "SPA", ""],
+        ["Sacher1100-1190", "2026-09-17", "09:00", "18:00", "WG mixer1", "SC26231-02"],
+        ["Sacher1100-1190", "2026-09-18", "09:00", "18:00", "WG mixer2", "PMC26016-05"],
+        ["Sacher1100-1190", "2026-09-22", "09:00", "18:00", "WG mixer2", "PMC26016-05"],
+        ["Sacher1100-1190", "2026-09-23", "09:00", "18:00", "WG OT1", ""],
+        ["Sacher 790 ~840", "2026-09-18", "09:00", "18:00", "CL/ackLairs", ""],
+        ["Toptica 950", "2026-09-17", "09:00", "18:00", "WG mixer3", "SC26423-04"],
+        ["Toptica 950", "2026-09-22", "09:00", "18:00", "WG mixer3", "SC26423-04"],
+        ["Toptica 950", "2026-09-23", "09:00", "18:00", "WG OT2", "SC26519-01"],
+        ["HCP - 2 um amplifier", "2026-09-17", "09:00", "18:00", "WG mixer1", "SC26231-02"],
+        ["HCP - 2 um amplifier", "2026-09-18", "09:00", "18:00", "WG mixer1", "PMC26016-02"],
+        ["HCP - 2 um amplifier", "2026-09-21", "16:00", "22:00", "WG mixer1", "SC26231-02 16點使用"]
+      ];
+      return rows.map(([instrument, date, start, end, name, note]) => ({
+        id: uid(), instrument, date, start, end, name, note, createdAt: new Date().toISOString()
+      }));
+    }
+
+    document.getElementById("userName").value = localStorage.getItem(USER_KEY) || "";
+    document.getElementById("userName").addEventListener("change", (e) => {
+      localStorage.setItem(USER_KEY, e.target.value.trim());
+    });
+    document.getElementById("prevWeek").onclick = () => {
+      state.weekStart.setDate(state.weekStart.getDate() - 7);
+      render();
+    };
+    document.getElementById("nextWeek").onclick = () => {
+      state.weekStart.setDate(state.weekStart.getDate() + 7);
+      render();
+    };
+    document.getElementById("thisWeek").onclick = () => {
+      state.weekStart = startOfWeek(new Date());
+      render();
+    };
+    document.getElementById("newBooking").onclick = () => openCreate();
+    document.getElementById("cancelBtn").onclick = closeModal;
+    document.getElementById("modalBg").addEventListener("click", (e) => {
+      if (e.target.id === "modalBg") closeModal();
+    });
+    document.getElementById("saveBtn").onclick = saveForm;
+    document.getElementById("deleteBtn").onclick = deleteCurrent;
+    document.getElementById("loadSample").onclick = () => {
+      if (state.bookings.length && !confirm("將以範例週表覆蓋目前資料，確定嗎？")) return;
+      state.bookings = sampleBookings();
+      saveBookings();
+      state.weekStart = startOfWeek(new Date("2026-09-17T00:00:00"));
+      render();
+      toast("已載入圖表中的範例預約");
+    };
+    document.getElementById("exportData").onclick = () => {
+      const blob = new Blob([JSON.stringify(state.bookings, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "instrument-bookings.json";
+      a.click();
+    };
+    document.getElementById("importBtn").onclick = () => document.getElementById("importFile").click();
+    document.getElementById("importFile").addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const data = JSON.parse(reader.result);
+          if (!Array.isArray(data)) throw new Error("格式需為陣列");
+          state.bookings = data;
+          saveBookings();
+          render();
+          toast("匯入完成");
+        } catch (err) {
+          alert("匯入失敗：" + err.message);
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = "";
+    });
+
+    if (!state.bookings.length) {
+      state.bookings = sampleBookings();
+      saveBookings();
+    }
+    render();
+  </script>
+</body>
+</html>
