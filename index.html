@@ -4,116 +4,50 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>實驗室儀器預約系統</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
   <style>
-    :root {
-      --bg: #f3f5f8;
-      --paper: #ffffff;
-      --ink: #1c2430;
-      --muted: #5b6778;
-      --line: #d7dee8;
-      --accent: #0f6e6a;
-      --accent-2: #0b4f4c;
-      --warn: #b45309;
-      --danger: #b42318;
-      --ok: #027a48;
-      --shadow: 0 10px 30px rgba(20, 40, 60, 0.08);
-    }
+    :root { --bg:#f3f5f8; --paper:#fff; --ink:#1c2430; --muted:#5b6778; --line:#d7dee8; --accent:#0f6e6a; --accent-2:#0b4f4c; --danger:#b42318; --shadow:0 10px 30px rgba(20,40,60,.08); }
     * { box-sizing: border-box; }
-    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: "Noto Sans TC", sans-serif; }
-    header {
-      background: linear-gradient(135deg, #0b3d3b 0%, #0f6e6a 55%, #2a7ab5 100%);
-      color: #fff;
-      padding: 22px 24px 20px;
-    }
-    .wrap { max-width: 1400px; margin: 0 auto; }
-    header h1 { margin: 0 0 6px; font-size: 26px; letter-spacing: 0.04em; }
-    header p { margin: 0; opacity: 0.9; font-size: 14px; }
-    .toolbar {
-      display: flex; flex-wrap: wrap; gap: 10px; align-items: end;
-      padding: 16px 0 8px;
-    }
-    .field { display: flex; flex-direction: column; gap: 4px; }
-    .field label { font-size: 12px; color: var(--muted); font-weight: 700; }
-    input, select, button, textarea {
-      font-family: inherit; font-size: 14px;
-    }
-    input, select, textarea {
-      border: 1px solid var(--line); border-radius: 10px; padding: 9px 11px; background: #fff;
-    }
-    input:focus, select:focus, textarea:focus { outline: 2px solid #9ad8d4; border-color: var(--accent); }
-    .name-box {
-      background: #fff; border: 2px solid #9ad8d4; min-width: 180px; font-weight: 700;
-    }
-    .btn {
-      border: 0; border-radius: 10px; padding: 9px 14px; cursor: pointer; font-weight: 700;
-      background: var(--accent); color: #fff;
-    }
-    .btn:hover { background: var(--accent-2); }
-    .btn.ghost { background: #fff; color: var(--ink); border: 1px solid var(--line); }
-    .btn.warn { background: #b45309; }
-    .btn.danger { background: var(--danger); }
-    .week-nav { display: flex; gap: 8px; align-items: center; }
-    .week-label { font-weight: 800; min-width: 210px; text-align: center; }
-    .legend { font-size: 12px; color: var(--muted); padding: 4px 0 12px; }
-    .board {
-      background: var(--paper); border-radius: 16px; box-shadow: var(--shadow);
-      overflow: auto; margin-bottom: 28px;
-    }
-    table.grid { border-collapse: separate; border-spacing: 0; min-width: 1100px; width: 100%; }
-    .grid th, .grid td { border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); vertical-align: top; }
-    .grid th { background: #eef3f7; font-size: 13px; padding: 10px 8px; position: sticky; top: 0; z-index: 2; }
-    .grid th.inst { left: 0; z-index: 3; min-width: 170px; text-align: left; }
-    .grid td.inst {
-      position: sticky; left: 0; background: #f8fafc; font-weight: 800; font-size: 13px;
-      padding: 10px 10px; min-width: 170px; z-index: 1;
-    }
-    .grid td.cell { min-width: 160px; height: 92px; padding: 6px; background: #fff; }
-    .grid td.cell.today { background: #f3fbfa; }
-    .cell-list { display: flex; flex-direction: column; gap: 5px; min-height: 70px; }
-    .booking {
-      border-radius: 8px; padding: 5px 7px; font-size: 12px; line-height: 1.35;
-      color: #fff; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,.12);
-    }
-    .booking .who { font-weight: 800; }
-    .booking .meta { opacity: 0.92; font-family: "JetBrains Mono", monospace; font-size: 11px; }
-    .add {
-      margin-top: auto; border: 1px dashed #c5d0dc; background: #f8fbff; color: #3c4b5c;
-      border-radius: 8px; padding: 4px 6px; font-size: 12px; cursor: pointer; text-align: center;
-    }
-    .add:hover { background: #e8f6f4; border-color: var(--accent); color: var(--accent-2); }
-    .empty { color: #98a4b3; font-size: 12px; }
-    .modal-bg {
-      position: fixed; inset: 0; background: rgba(16, 24, 32, .45); display: none;
-      align-items: center; justify-content: center; z-index: 20; padding: 16px;
-    }
-    .modal-bg.show { display: flex; }
-    .modal {
-      width: min(520px, 100%); background: #fff; border-radius: 16px; padding: 18px 18px 14px;
-      box-shadow: 0 20px 50px rgba(0,0,0,.25);
-    }
-    .modal h2 { margin: 0 0 12px; font-size: 18px; }
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .form-grid .full { grid-column: 1 / -1; }
-    .hint { font-size: 12px; color: var(--muted); margin-top: 2px; }
-    .alert {
-      display: none; background: #fef3f2; color: #912018; border: 1px solid #fecdca;
-      border-radius: 10px; padding: 8px 10px; font-size: 13px; margin: 8px 0;
-    }
-    .alert.show { display: block; }
-    .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }
-    .toast {
-      position: fixed; right: 16px; bottom: 16px; background: #10231f; color: #fff;
-      padding: 10px 14px; border-radius: 10px; display: none; z-index: 30; max-width: 360px;
-    }
-    .toast.show { display: block; }
-    footer { color: var(--muted); font-size: 12px; padding-bottom: 30px; }
-    @media (max-width: 720px) {
-      .form-grid { grid-template-columns: 1fr; }
-      header h1 { font-size: 20px; }
-    }
+    html, body { margin:0; padding:0; background:var(--bg); color:var(--ink); font-family:"Noto Sans TC",sans-serif; }
+    header { background:linear-gradient(135deg,#0b3d3b 0%,#0f6e6a 55%,#2a7ab5 100%); color:#fff; padding:22px 24px 20px; }
+    .wrap { max-width:1400px; margin:0 auto; }
+    header h1 { margin:0 0 6px; font-size:26px; }
+    header p { margin:0; opacity:.9; font-size:14px; }
+    .toolbar { display:flex; flex-wrap:wrap; gap:10px; align-items:end; padding:16px 0 8px; }
+    .field { display:flex; flex-direction:column; gap:4px; }
+    .field label { font-size:12px; color:var(--muted); font-weight:700; }
+    input, select, button { font-family:inherit; font-size:14px; }
+    input, select { border:1px solid var(--line); border-radius:10px; padding:9px 11px; background:#fff; }
+    .name-box { border:2px solid #9ad8d4; min-width:180px; font-weight:700; }
+    .btn { border:0; border-radius:10px; padding:9px 14px; cursor:pointer; font-weight:700; background:var(--accent); color:#fff; }
+    .btn.ghost { background:#fff; color:var(--ink); border:1px solid var(--line); }
+    .btn.danger { background:var(--danger); }
+    .week-nav { display:flex; gap:8px; align-items:center; }
+    .week-label { font-weight:800; min-width:210px; text-align:center; }
+    .legend { font-size:12px; color:var(--muted); padding:4px 0 12px; }
+    .board { background:var(--paper); border-radius:16px; box-shadow:var(--shadow); overflow:auto; margin-bottom:28px; }
+    table.grid { border-collapse:separate; border-spacing:0; min-width:1100px; width:100%; }
+    .grid th, .grid td { border-bottom:1px solid var(--line); border-right:1px solid var(--line); vertical-align:top; }
+    .grid th { background:#eef3f7; font-size:13px; padding:10px 8px; }
+    .grid td.inst { background:#f8fafc; font-weight:800; font-size:13px; padding:10px; min-width:170px; }
+    .grid td.cell { min-width:160px; height:92px; padding:6px; }
+    .grid td.cell.today { background:#f3fbfa; }
+    .cell-list { display:flex; flex-direction:column; gap:5px; min-height:70px; }
+    .booking { border-radius:8px; padding:5px 7px; font-size:12px; color:#fff; cursor:pointer; }
+    .booking .who { font-weight:800; }
+    .add { border:1px dashed #c5d0dc; background:#f8fbff; color:#3c4b5c; border-radius:8px; padding:4px 6px; font-size:12px; cursor:pointer; text-align:center; }
+    .empty { color:#98a4b3; font-size:12px; }
+    .modal-bg { position:fixed; inset:0; background:rgba(16,24,32,.45); display:none; align-items:center; justify-content:center; z-index:20; padding:16px; }
+    .modal-bg.show { display:flex; }
+    .modal { width:min(520px,100%); background:#fff; border-radius:16px; padding:18px; }
+    .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .form-grid .full { grid-column:1/-1; }
+    .hint { font-size:12px; color:var(--muted); }
+    .alert { display:none; background:#fef3f2; color:#912018; border:1px solid #fecdca; border-radius:10px; padding:8px 10px; font-size:13px; margin:8px 0; }
+    .alert.show { display:block; }
+    .actions { display:flex; gap:8px; justify-content:flex-end; margin-top:14px; }
+    .toast { position:fixed; right:16px; bottom:16px; background:#10231f; color:#fff; padding:10px 14px; border-radius:10px; display:none; z-index:30; }
+    .toast.show { display:block; }
+    footer { color:var(--muted); font-size:12px; padding-bottom:30px; }
   </style>
 </head>
 <body>
@@ -123,7 +57,6 @@
       <p>填寫使用者名稱與時段即可預約。同一儀器在相同時段不可重複預約。</p>
     </div>
   </header>
-
   <div class="wrap">
     <div class="toolbar">
       <div class="field">
@@ -146,44 +79,21 @@
       <input id="importFile" type="file" accept="application/json" hidden />
     </div>
     <div class="legend">點空白格子可直接預約；點既有預約可檢視／取消。衝突檢查以「同一儀器 + 同一日期 + 時段重疊」為準。</div>
-    <div class="board">
-      <table class="grid" id="grid"></table>
-    </div>
-    <footer>
-      資料預設存在此瀏覽器（localStorage）。若要給實驗室共用，請匯出 JSON 後放到共用位置，或啟用 GitHub Pages 後請大家使用同一台公用電腦／同一瀏覽器設定檔。
-    </footer>
+    <div class="board"><table class="grid" id="grid"></table></div>
+    <footer>資料存在此瀏覽器。請用 <a href="https://okelddo.github.io/lab-instrument-booking/">GitHub Pages</a> 開啟，並強制重新整頁（Ctrl+F5）。</footer>
   </div>
-
   <div class="modal-bg" id="modalBg">
     <div class="modal">
       <h2 id="modalTitle">新增預約</h2>
       <div class="form-grid">
-        <div class="field full">
-          <label>使用者名稱</label>
-          <input id="fName" placeholder="必填" />
-        </div>
-        <div class="field full">
-          <label>儀器</label>
-          <select id="fInst"></select>
-        </div>
-        <div class="field">
-          <label>日期</label>
-          <input id="fDate" type="date" />
-        </div>
-        <div class="field">
-          <label>備註</label>
-          <input id="fNote" placeholder="例如 SC26482-01、可協調" />
-        </div>
-        <div class="field">
-          <label>開始時間</label>
-          <input id="fStart" type="time" value="09:00" />
-        </div>
-        <div class="field">
-          <label>結束時間</label>
-          <input id="fEnd" type="time" value="18:00" />
-        </div>
+        <div class="field full"><label>使用者名稱</label><input id="fName" placeholder="必填" /></div>
+        <div class="field full"><label>儀器</label><select id="fInst"></select></div>
+        <div class="field"><label>日期</label><input id="fDate" type="date" /></div>
+        <div class="field"><label>備註</label><input id="fNote" placeholder="例如 SC26482-01" /></div>
+        <div class="field"><label>開始時間</label><input id="fStart" type="time" value="09:00" /></div>
+        <div class="field"><label>結束時間</label><input id="fEnd" type="time" value="18:00" /></div>
       </div>
-      <div class="hint">結束時間必須晚於開始時間。若該儀器此時段已被預約，系統會拒絕並顯示衝突對象。</div>
+      <div class="hint">結束時間必須晚於開始時間。時段重疊會被拒絕。</div>
       <div class="alert" id="formAlert"></div>
       <div class="actions">
         <button class="btn danger" id="deleteBtn" style="display:none;margin-right:auto;">取消此預約</button>
@@ -193,7 +103,6 @@
     </div>
   </div>
   <div class="toast" id="toast"></div>
-
-  <script src="app.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/okelddo/lab-instrument-booking@7541350f3a49f5f0f933922ca2a62a62a13c890a/app.js"></script>
 </body>
 </html>
