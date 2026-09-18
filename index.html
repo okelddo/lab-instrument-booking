@@ -6,8 +6,8 @@
   <title>實驗室儀器預約系統</title>
   <style>
     :root { --bg:#f3f5f8; --paper:#fff; --ink:#1c2430; --muted:#5b6778; --line:#d7dee8; --accent:#0f6e6a; --danger:#b42318; --shadow:0 10px 30px rgba(20,40,60,.08); }
-    * { box-sizing: border-box; }
-    html, body { margin:0; padding:0; background:var(--bg); color:var(--ink); font-family:"Noto Sans TC",sans-serif; }
+    * { box-sizing:border-box; }
+    html,body { margin:0; padding:0; background:var(--bg); color:var(--ink); font-family:"Noto Sans TC",sans-serif; }
     header { background:linear-gradient(135deg,#0b3d3b 0%,#0f6e6a 55%,#2a7ab5 100%); color:#fff; padding:22px 24px 20px; }
     .wrap { max-width:1400px; margin:0 auto; }
     header h1 { margin:0 0 6px; font-size:26px; }
@@ -15,18 +15,18 @@
     .toolbar { display:flex; flex-wrap:wrap; gap:10px; align-items:end; padding:16px 0 8px; }
     .field { display:flex; flex-direction:column; gap:4px; }
     .field label { font-size:12px; color:var(--muted); font-weight:700; }
-    input, select, button { font-family:inherit; font-size:14px; }
-    input, select { border:1px solid var(--line); border-radius:10px; padding:9px 11px; background:#fff; }
+    input,select,button { font-family:inherit; font-size:14px; }
+    input,select { border:1px solid var(--line); border-radius:10px; padding:9px 11px; background:#fff; }
     .name-box { border:2px solid #9ad8d4; min-width:180px; font-weight:700; }
     .btn { border:0; border-radius:10px; padding:9px 14px; cursor:pointer; font-weight:700; background:var(--accent); color:#fff; }
     .btn.ghost { background:#fff; color:var(--ink); border:1px solid var(--line); }
     .btn.danger { background:var(--danger); }
     .week-nav { display:flex; gap:8px; align-items:center; }
     .week-label { font-weight:800; min-width:210px; text-align:center; }
-    .legend { font-size:12px; color:var(--muted); padding:4px 0 12px; }
+    .legend { font-size:12px; color:var(--muted); padding:4px 0 8px; }
     .board { background:var(--paper); border-radius:16px; box-shadow:var(--shadow); overflow:auto; margin-bottom:28px; }
     table.grid { border-collapse:separate; border-spacing:0; min-width:1100px; width:100%; }
-    .grid th, .grid td { border-bottom:1px solid var(--line); border-right:1px solid var(--line); vertical-align:top; }
+    .grid th,.grid td { border-bottom:1px solid var(--line); border-right:1px solid var(--line); vertical-align:top; }
     .grid th { background:#eef3f7; font-size:13px; padding:10px 8px; }
     .grid td.inst { background:#f8fafc; font-weight:800; font-size:13px; padding:10px; min-width:170px; }
     .grid td.cell { min-width:160px; height:92px; padding:6px; }
@@ -61,7 +61,7 @@
     <div class="toolbar">
       <div class="field">
         <label for="userName">使用者名稱（必填）</label>
-        <input id="userName" class="name-box" placeholder="例如 WG OT1 / 王小明" />
+        <input id="userName" class="name-box" placeholder="例如 WG OT1 / Chester" />
       </div>
       <div class="field">
         <label>週次</label>
@@ -77,10 +77,13 @@
       <button class="btn ghost" id="exportData">匯出 JSON</button>
       <button class="btn ghost" id="importBtn">匯入 JSON</button>
       <input id="importFile" type="file" accept="application/json" hidden />
+      <button class="btn" id="connectNas">連接 NAS 資料夾</button>
+      <button class="btn ghost" id="importNas">從 NAS 重新匯入</button>
     </div>
-    <div class="legend">點空白格子可直接預約；點既有預約可檢視／取消。衝突檢查以「同一儀器 + 同一日期 + 時段重疊」為準。</div>
+    <div class="legend">共用資料夾：\\nas\Temp\ChesterHsu　檔名：instrument-bookings.json。使用前自動匯入，預約完成後自動存回。請用 Chrome / Edge。</div>
+    <div class="legend" id="nasStatus">尚未連接 NAS</div>
     <div class="board"><table class="grid" id="grid"></table></div>
-    <footer>請用此網址開啟：https://okelddo.github.io/lab-instrument-booking/ ，若看不到週表請按 Ctrl+F5 強制重整頁。</footer>
+    <footer>網址：https://okelddo.github.io/lab-instrument-booking/ 。若看不到週表請 Ctrl+F5。</footer>
   </div>
   <div class="modal-bg" id="modalBg">
     <div class="modal">
@@ -106,20 +109,21 @@
   <script>
     (function () {
       var urls = [
-        "./app.js",
-        "https://cdn.jsdelivr.net/gh/okelddo/lab-instrument-booking@7541350f3a49f5f0f933922ca2a62a62a13c890a/app.js",
-        "https://raw.githubusercontent.com/okelddo/lab-instrument-booking/7541350f3a49f5f0f933922ca2a62a62a13c890a/app.js"
+        "./app.js?v=nas1",
+        "https://cdn.jsdelivr.net/gh/okelddo/lab-instrument-booking@main/app.js",
+        "https://raw.githubusercontent.com/okelddo/lab-instrument-booking/main/app.js"
       ];
       function load(i) {
         if (i >= urls.length) {
-          document.getElementById("weekLabel").textContent = "脚本載入失敗，請重新整頁";
+          var el = document.getElementById("weekLabel");
+          if (el) el.textContent = "脚本載入失敗，請 Ctrl+F5";
           return;
         }
         fetch(urls[i]).then(function (r) {
           if (!r.ok) throw new Error("bad");
           return r.text();
         }).then(function (code) {
-          if (code.indexOf("const INSTRUMENTS") === -1) throw new Error("not js");
+          if (code.indexOf("NAS_FILE") === -1 && code.indexOf("connectNasFolder") === -1) throw new Error("old");
           (0, eval)(code);
         }).catch(function () { load(i + 1); });
       }
